@@ -1,0 +1,12 @@
+{
+  "uuid": "power-glance@local",
+  "name": "Power Glance",
+  "description": "Shows live power draw in the top bar, split into CPU, graphics, memory controller and the rest of the laptop. No root needed.",
+  "shell-version": [
+    "46",
+    "47",
+    "48"
+  ],
+  "version": 1,
+  "url": "https://github.com/aadheel/power-glance"
+}

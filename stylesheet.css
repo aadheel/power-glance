@@ -1,0 +1,60 @@
+/* Power Glance: neutral greys via opacity (set in JS) so it reads on light and dark shell themes; one accent for bars. */
+
+.pg-panel-label {
+  font-feature-settings: "tnum";
+  font-weight: 500;
+}
+.pg-panel-label.pg-on-ac {
+  font-weight: 400;
+}
+
+.pg-box {
+  width: 248px;
+  padding: 4px 4px 6px;
+  spacing: 16px;
+}
+
+.pg-head { spacing: 2px; }
+
+.pg-eyebrow {
+  font-size: 8pt;
+  font-weight: 600;
+}
+
+.pg-total {
+  font-size: 26pt;
+  font-weight: 300;
+  font-feature-settings: "tnum";
+}
+
+.pg-sub { font-size: 9pt; }
+
+.pg-rows { spacing: 12px; }
+
+.pg-row { spacing: 4px; }
+.pg-row-child { padding-left: 14px; }
+
+.pg-row-name { font-size: 10pt; }
+.pg-row-value {
+  font-size: 10pt;
+  font-weight: 600;
+  font-feature-settings: "tnum";
+}
+.pg-row-child .pg-row-name,
+.pg-row-child .pg-row-value { font-size: 9pt; }
+
+.pg-hint { font-size: 8pt; }
+
+.pg-track {
+  height: 3px;
+  border-radius: 2px;
+  background-color: rgba(128, 128, 128, 0.22);
+}
+.pg-fill {
+  height: 3px;
+  border-radius: 2px;
+  background-color: #62a0ea;
+}
+.pg-fill-child {
+  background-color: rgba(98, 160, 234, 0.6);
+}
