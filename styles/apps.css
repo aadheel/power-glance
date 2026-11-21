@@ -1,0 +1,3 @@
+/* Apps tab. Status lines ("Measuring…", the battery session's times) match the size of .pg-sub. */
+
+.pg-app-status { font-size: 9pt; }

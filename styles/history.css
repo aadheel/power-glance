@@ -1,0 +1,12 @@
+/* History tab. The graph itself is drawn in JS (ACCENT / NEUTRAL from ui/common.js). */
+
+.pg-hist-head { spacing: 8px; }
+
+/* Graph with its "24 h ago ... now" axis labels tucked under it */
+.pg-hist-plot { spacing: 3px; }
+.pg-hist-axis { spacing: 8px; }
+
+.pg-hist-rows { spacing: 8px; }
+
+/* A stat row with a hint line under it */
+.pg-hist-stat { spacing: 2px; }

@@ -1,0 +1,17 @@
+/* Battery tab: the charge-limit switch row and the setup command. */
+
+.pg-bat-toggle { padding: 2px 0; }
+
+/* Room for a focus ring around the Shell's switch, which has no focus style of its own here. */
+.pg-bat-switch {
+  padding: 2px;
+  border-radius: 15px;
+}
+.pg-bat-toggle .pg-bat-switch .toggle-switch:ltr,
+.pg-bat-toggle .pg-bat-switch .toggle-switch:rtl { margin: 0; }
+.pg-bat-toggle:focus .pg-bat-switch { box-shadow: inset 0 0 0 2px rgba(98, 160, 234, 0.8); }
+
+.pg-bat-cmd {
+  font-family: monospace;
+  font-size: 9pt;
+}

@@ -36,8 +36,59 @@ function listDir(path) {
     return out.sort();
 }
 
+// AMD APU gpu_metrics table, format 2.x (Renoir, Rembrandt, Phoenix, Hawk Point).
+function parseMetrics(bytes) {
+    if (!bytes || bytes.length < 64) return null;
+    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (dv.getUint8(2) !== 2) return null;
+
+    const mW = off => {
+        const x = dv.getUint16(off, true);
+        return x === 0xffff ? null : x / 1000;
+    };
+    const socket = mW(40);
+    if (socket === null || socket > 200) return null;
+    const cpuDirect = mW(42), soc = mW(44), gfx = mW(46);
+    const cores = [];
+    for (let i = 0; i < 8; i++) {
+        const c = mW(48 + i * 2);
+        if (c !== null) cores.push(c);
+    }
+    const cpu = cpuDirect ?? (cores.length ? cores.reduce((a, c) => a + c, 0) : null);
+    return {socket, cpu, gfx, soc};
+}
+
+// Paths found on the first run. Plain strings, so they may outlive disable/enable (screen lock);
+// re-enumerating sysfs on every unlock would stall the shell for several ms.
+let discovered = null;
+
+const EMPTY_BAT = {status: null, percent: null, watts: null, hoursLeft: null};
+
+function isCancel(e) {
+    return e instanceof GLib.Error && e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED);
+}
+
 export class Sensors {
     constructor() {
+        this._cancellable = new Gio.Cancellable();
+        this._bat = EMPTY_BAT;
+        this._metrics = null;
+        this._batBusy = false;
+        this._metricsBusy = false;
+        this._prev = null;
+        if (discovered) {
+            Object.assign(this, discovered);
+        } else {
+            this._discover();
+            discovered = {
+                battery: this.battery, metricsPath: this.metricsPath, pptPath: this.pptPath,
+                backlight: this.backlight, panel: this.panel, wifi: this.wifi, disks: this.disks, dimms: this.dimms,
+            };
+        }
+        this._refresh();
+    }
+
+    _discover() {
         this.battery = null;
         for (const n of listDir('/sys/class/power_supply')) {
             const p = `/sys/class/power_supply/${n}`;
@@ -66,7 +117,44 @@ export class Sensors {
         this.wifi = listDir('/sys/class/net').map(n => `/sys/class/net/${n}`).find(p => exists(`${p}/wireless`)) ?? null;
         this.disks = listDir('/sys/block').filter(n => /^nvme\d+n\d+$/.test(n)).map(n => `/sys/block/${n}/stat`);
         this.dimms = listDir('/sys/class/hwmon').filter(n => readText(`/sys/class/hwmon/${n}/name`) === 'spd5118').length || 2;
-        this._prev = null;
+    }
+
+    // Reading the battery makes the ACPI firmware refresh (2-3 ms on this Dell, once per second at
+    // most), and gpu_metrics occasionally takes a few ms too. Both go to a GIO worker thread; each tick
+    // uses the values that arrived since the previous one (at most ~2 s old).
+    _refresh() {
+        if (this.battery && !this._batBusy) {
+            this._batBusy = true;
+            Gio.File.new_for_path(`${this.battery}/status`).load_contents_async(this._cancellable, (file, res) => {
+                let status = null;
+                try {
+                    const [, bytes] = file.load_contents_finish(res);
+                    status = decoder.decode(bytes).trim();
+                } catch (e) {
+                    if (isCancel(e)) return;
+                }
+                this._batBusy = false;
+                // The firmware data is fresh now, so the remaining reads are cheap cache hits.
+                this._bat = this._readBattery(status);
+            });
+        }
+        if (this.metricsPath && !this._metricsBusy) {
+            this._metricsBusy = true;
+            Gio.File.new_for_path(this.metricsPath).load_contents_async(this._cancellable, (file, res) => {
+                let bytes = null;
+                try {
+                    [, bytes] = file.load_contents_finish(res);
+                } catch (e) {
+                    if (isCancel(e)) return;
+                }
+                this._metricsBusy = false;
+                this._metrics = bytes ? parseMetrics(bytes) : null;
+            });
+        }
+    }
+
+    destroy() {
+        this._cancellable.cancel();
     }
 
     _sample() {
@@ -136,10 +224,9 @@ export class Sensors {
         return {screen, wifi, storage, ram};
     }
 
-    _readBattery() {
+    _readBattery(status) {
         const b = this.battery;
-        if (!b) return {status: null, percent: null, watts: null, hoursLeft: null};
-        const status = readText(`${b}/status`);
+        if (!b) return EMPTY_BAT;
         const percent = readNum(`${b}/capacity`);
         const powerNow = readNum(`${b}/power_now`);
         const currentNow = readNum(`${b}/current_now`);
@@ -160,40 +247,10 @@ export class Sensors {
         return {status, percent, watts: status === 'Discharging' ? watts : null, hoursLeft};
     }
 
-    // AMD APU gpu_metrics table, format 2.x (Renoir, Rembrandt, Phoenix, Hawk Point).
-    _readMetrics() {
-        if (!this.metricsPath) return null;
-        let bytes;
-        try {
-            const [ok, b] = GLib.file_get_contents(this.metricsPath);
-            if (!ok) return null;
-            bytes = b;
-        } catch (e) {
-            return null;
-        }
-        if (bytes.length < 64) return null;
-        const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-        if (dv.getUint8(2) !== 2) return null;
-
-        const mW = off => {
-            const x = dv.getUint16(off, true);
-            return x === 0xffff ? null : x / 1000;
-        };
-        const socket = mW(40);
-        if (socket === null || socket > 200) return null;
-        const cpuDirect = mW(42), soc = mW(44), gfx = mW(46);
-        const cores = [];
-        for (let i = 0; i < 8; i++) {
-            const c = mW(48 + i * 2);
-            if (c !== null) cores.push(c);
-        }
-        const cpu = cpuDirect ?? (cores.length ? cores.reduce((a, c) => a + c, 0) : null);
-        return {socket, cpu, gfx, soc};
-    }
-
     read() {
-        const bat = this._readBattery();
-        const m = this._readMetrics();
+        const bat = this._bat;
+        const m = this._metrics;
+        this._refresh();   // for the next tick
         let socket = m?.socket ?? null;
         if (socket === null && this.pptPath) {
             const v = readNum(this.pptPath);
