@@ -20,7 +20,7 @@
 .pg-tabs { spacing: 2px; }
 .pg-tab {
   font-size: 9pt;
-  padding: 4px 6px;
+  padding: 4px 3px;
   border-radius: 6px;
 }
 .pg-tab:hover { background-color: rgba(128, 128, 128, 0.16); }
@@ -80,6 +80,11 @@
 }
 .pg-fill-child {
   background-color: rgba(98, 160, 234, 0.6);
+}
+/* A part running close to its temperature limit. Semantic warning colour, separate from the accent. */
+.pg-fill-hot,
+.pg-fill-child.pg-fill-hot {
+  background-color: #e66100;
 }
 /* Battery tab: the charge-limit switch row and the setup command. */
 

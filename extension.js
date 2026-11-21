@@ -12,11 +12,13 @@ import {PowerModel} from './model.js';
 import {HistoryStore} from './history.js';
 import {AppTracker} from './apps.js';
 import {BatteryInfo} from './battery.js';
+import {ThermalInfo} from './thermal.js';
 import {fmtW} from './ui/common.js';
 import {NowTab} from './ui/nowTab.js';
 import {AppsTab} from './ui/appsTab.js';
 import {HistoryTab} from './ui/historyTab.js';
 import {BatteryTab} from './ui/batteryTab.js';
+import {TempsTab} from './ui/tempsTab.js';
 
 const REFRESH_SECONDS = 2;
 const TABS = [
@@ -24,6 +26,7 @@ const TABS = [
     ['apps', 'Apps'],
     ['history', 'History'],
     ['battery', 'Battery'],
+    ['temps', 'Temps'],
 ];
 
 // Run one module's step; log and swallow its error so the others keep working.
@@ -45,6 +48,7 @@ class PowerIndicator extends PanelMenu.Button {
         this._history = new HistoryStore();
         this._apps = new AppTracker();
         this._battery = new BatteryInfo();
+        this._thermal = new ThermalInfo();
         this._last = null;
         this._active = 'now';
 
@@ -99,6 +103,7 @@ class PowerIndicator extends PanelMenu.Button {
             apps: new AppsTab(this._apps),
             history: new HistoryTab(this._history),
             battery: new BatteryTab(this._battery),
+            temps: new TempsTab(this._thermal),
         };
         for (const [id] of TABS) box.add_child(this._pages[id].actor);
         this._select(this._active);
@@ -151,7 +156,8 @@ class PowerIndicator extends PanelMenu.Button {
         this._history?.destroy();
         this._apps?.destroy();
         this._battery?.destroy();
-        this._model = this._history = this._apps = this._battery = null;
+        this._thermal?.destroy();
+        this._model = this._history = this._apps = this._battery = this._thermal = null;
         super.destroy();
     }
 });

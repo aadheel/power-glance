@@ -84,6 +84,7 @@ export class PowerModel {
             wifi: est.wifi,
             storage: est.storage,
             ram: est.ram,
+            cpuLoad: r.devices?.cpuLoad ?? null,
             other,
             system,
             systemMeasured: total !== null,

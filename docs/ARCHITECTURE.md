@@ -33,6 +33,8 @@ history.js          HistoryStore                 -> feature: history
 ui/historyTab.js    HistoryTab                   -> feature: history
 apps.js             AppTracker                   -> feature: apps
 ui/appsTab.js       AppsTab                      -> feature: apps
+thermal.js          ThermalInfo                  -> feature: temps
+ui/tempsTab.js      TempsTab                     -> feature: temps
 styles/base.css     shared CSS (done)
 styles/<feature>.css  each feature's extra CSS; concatenated into stylesheet.css by the integrator
 tests/test_<feature>.js  gjs -m tests runnable outside the shell
@@ -81,6 +83,7 @@ All power values are watts (`number`) or `null` when unknown.
 | `screen`, `wifi`, `storage`, `ram`, `other` | estimates |
 | `system` | best whole-laptop figure: `total` when measured, else `socket + rest` (estimated); `null` when neither is known or there is no package sensor |
 | `systemMeasured` | `true` when `system` is the measured `total` |
+| `cpuLoad` | CPU load in percent over the last tick, or `null` |
 
 ## Feature interfaces
 
@@ -141,6 +144,27 @@ export class AppTracker {
   destroy()
 }
 ```
+
+### thermal.js
+
+```js
+export class ThermalInfo {
+  constructor()                      // cheap; sensors are discovered on the first read(), in idle steps
+  onChange                           // optional callback, called when a batch of readings arrives
+  read() -> {
+    ready: bool,                     // false until discovery has finished
+    temps: [{key, name, c: number|null, limit: number, warn: number}],   // °C; warn < limit
+    fans:  [{key, name, rpm: number|null, max: number|null}],
+    cpu:   {mhz: number|null, maxMHz: number|null},
+    gpu:   {load: number|null, mhz: number|null},
+  }
+  destroy()
+}
+```
+
+Every sensor read is a `load_contents_async` (SSD temperature: 4-21 ms, RAM over I2C ~2 ms, Dell EC
+~3 ms via a BIOS call). Fast sensors are read at most every 1.5 s, slow ones every 6 s, and only when
+`read()` is called, i.e. while the Temps tab is open. CPU load comes from the Snapshot (`cpuLoad`).
 
 ### Tabs (`ui/*Tab.js`)
 

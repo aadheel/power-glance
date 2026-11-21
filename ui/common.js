@@ -99,6 +99,12 @@ export class BarRow {
         this.fill.width = Math.max(2, Math.round(f * this.trackW));
     }
 
+    /** Warning colour on the bar, e.g. for a part running close to its temperature limit. */
+    setHot(hot) {
+        if (hot) this.fill.add_style_class_name('pg-fill-hot');
+        else this.fill.remove_style_class_name('pg-fill-hot');
+    }
+
     /** Hides the row when watts is null. */
     setWatts(watts, base, approx = false) {
         if (watts === null || watts === undefined) { this.hide(); return; }

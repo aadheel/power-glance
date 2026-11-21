@@ -221,7 +221,9 @@ export class Sensors {
             busy = 1 - (now.cpuIdle - prev.cpuIdle) / (now.cpuTotal - prev.cpuTotal);
         const ram = this.dimms * (0.15 + 0.8 * Math.min(1, Math.max(0, busy)));
 
-        return {screen, wifi, storage, ram};
+        // CPU load in percent, shared with the Temps tab so /proc/stat is read once per tick.
+        const cpuLoad = dt && now.cpuTotal > prev.cpuTotal ? 100 * Math.min(1, Math.max(0, busy)) : null;
+        return {screen, wifi, storage, ram, cpuLoad};
     }
 
     _readBattery(status) {
