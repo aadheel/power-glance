@@ -1,7 +1,7 @@
 {
   "uuid": "power-glance@local",
   "name": "Power Glance",
-  "description": "Shows live power draw in the top bar, split into CPU, graphics, memory controller and the rest of the laptop. No root needed.",
+  "description": "Shows live power draw in the top bar. Tabs for a breakdown by component (CPU, graphics, screen, Wi-Fi, storage, RAM), power by app, a 24-hour history, and battery health with an optional charge limit. No root needed.",
   "shell-version": [
     "46",
     "47",
