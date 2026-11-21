@@ -2,22 +2,9 @@
 
 A small GNOME Shell extension that shows how much power your laptop is drawing, right in the top bar. Click it for a breakdown by component.
 
-```
-WHOLE LAPTOP
-6.9 W
-On battery  ·  62%  ·  4 h 10 min left
+<img src="docs/screenshot.png" alt="Power Glance menu open under the top bar, showing 4.5 W for the processor package split into CPU cores, graphics and memory, and estimated figures for screen, Wi-Fi, storage and RAM" width="439">
 
-Processor package        3.1 W
-   CPU cores             1.6 W
-   Graphics              0.8 W
-   Memory & I/O          0.3 W
-Rest of laptop           3.8 W
-   Screen              ≈ 2.4 W
-   Wi-Fi               ≈ 0.2 W
-   Storage             ≈ 0.3 W
-   RAM                 ≈ 0.3 W
-   Other               ≈ 0.6 W
-```
+The screenshot was taken on the charger, so the headline shows the processor package. On battery it shows the whole laptop and adds an "Other" row (fan, motherboard, USB, power losses).
 
 No root, no daemons, no extra packages. It reads a few files in `/sys` every 2 seconds.
 

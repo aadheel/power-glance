@@ -2,6 +2,7 @@ import GObject from 'gi://GObject';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import Pango from 'gi://Pango';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -15,6 +16,13 @@ const SMOOTHING = 0.35;      // battery readings jump around; ease them a little
 const TRACK_W = 248;         // matches .pg-box width in stylesheet.css
 const CHILD_INDENT = 14;     // matches .pg-row-child padding-left
 const DIM = 150;             // opacity for secondary text, works on light and dark shell themes
+
+// St labels ellipsize by default, which wins over line_wrap; turn it off for multi-line text.
+function wrapLabel(label) {
+    label.clutter_text.line_wrap = true;
+    label.clutter_text.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
+    label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
+}
 
 const fmtW = w => (w === null || w === undefined) ? '–' : `${w.toFixed(1)} W`;
 
@@ -61,7 +69,7 @@ class PowerIndicator extends PanelMenu.Button {
         this._total = new St.Label({text: '–', style_class: 'pg-total'});
         this._sub = new St.Label({text: '', style_class: 'pg-sub'});
         this._sub.opacity = DIM;
-        this._sub.clutter_text.line_wrap = true;
+        wrapLabel(this._sub);
 
         const head = new St.BoxLayout({vertical: true, style_class: 'pg-head'});
         head.add_child(this._eyebrow);
@@ -90,7 +98,7 @@ class PowerIndicator extends PanelMenu.Button {
             style_class: 'pg-hint',
         });
         this._note.opacity = DIM;
-        this._note.clutter_text.line_wrap = true;
+        wrapLabel(this._note);
         box.add_child(this._note);
     }
 
